@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Programme Musculation</title>
+<meta name="theme-color" content="#0b0f1a">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Muscu">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <h1 id="topbar-title">Programme</h1>
+</header>
+
+<main id="views">
+
+  <!-- PROGRAMME -->
+  <section class="view" id="view-programme">
+    <div id="programme-list" class="stack"></div>
+    <button class="btn btn-primary btn-block" id="btn-add-day">+ Ajouter un jour</button>
+  </section>
+
+  <!-- SEANCE -->
+  <section class="view" id="view-seance">
+    <div id="seance-picker" class="stack">
+      <p class="hint">Choisis un jour de ton programme pour démarrer une séance.</p>
+      <div id="seance-day-buttons" class="stack"></div>
+    </div>
+    <div id="seance-active" class="stack hidden"></div>
+  </section>
+
+  <!-- HISTORIQUE -->
+  <section class="view" id="view-historique">
+    <div id="historique-list" class="stack"></div>
+  </section>
+
+  <!-- EXERCICES -->
+  <section class="view" id="view-exercices">
+    <input type="search" id="exo-search" placeholder="Rechercher un exercice..." class="input">
+    <div id="exo-list" class="stack"></div>
+    <button class="btn btn-primary btn-block" id="btn-add-exo">+ Ajouter un exercice</button>
+  </section>
+
+</main>
+
+<nav class="tabbar">
+  <button class="tab active" data-view="programme">
+    <span class="tab-icon">📋</span><span>Programme</span>
+  </button>
+  <button class="tab" data-view="seance">
+    <span class="tab-icon">🏋️</span><span>Séance</span>
+  </button>
+  <button class="tab" data-view="historique">
+    <span class="tab-icon">🕒</span><span>Historique</span>
+  </button>
+  <button class="tab" data-view="exercices">
+    <span class="tab-icon">📚</span><span>Exercices</span>
+  </button>
+</nav>
+
+<div id="modal-root"></div>
+
+<script src="js/exercises-data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
