@@ -1,26 +1,26 @@
 # Programme Musculation
 
-App locale (aucun compte, aucun cloud) pour créer ton programme de musculation et suivre tes séances. Toutes les données sont stockées directement dans le navigateur (localStorage).
+App personnelle (aucun compte, aucune base de données) pour créer ton programme de musculation et suivre tes séances. Toutes les données sont stockées directement dans le navigateur (localStorage).
 
-## Lancer l'app
+Le projet est structuré en app Astro (nécessaire pour l'héberger sur Webflow Cloud), mais le comportement reste 100% une app statique côté navigateur : mêmes fichiers HTML/CSS/JS qu'avant, juste servis via Astro.
 
-Sur ton Mac, dans le dossier du projet :
+## Développement local
 
 ```bash
 ./start.sh
 ```
 
-Le terminal affiche deux adresses :
-- une pour ton Mac (`http://localhost:8000`)
-- une pour ton téléphone, du type `http://192.168.x.x:8000` — à condition que le téléphone soit sur le **même wifi** que le Mac.
+Installe les dépendances si besoin, lance le serveur de dev, et affiche l'adresse à ouvrir sur ton téléphone (même wifi que le Mac) :
+- Mac : `http://localhost:4321`
+- Téléphone : `http://192.168.x.x:4321`
 
-## Installer sur l'écran d'accueil du téléphone
+## Déploiement (Webflow Cloud)
 
-1. Ouvre l'adresse `http://192.168.x.x:8000` dans Safari (iPhone) ou Chrome (Android).
-2. Safari : bouton Partager → "Sur l'écran d'accueil". Chrome : menu ⋮ → "Ajouter à l'écran d'accueil".
-3. L'app s'ouvre ensuite comme une vraie app, sans barre d'adresse.
-
-Le Mac doit être allumé et `./start.sh` doit tourner à chaque fois que tu veux utiliser l'app depuis ton téléphone.
+1. Pousser ce dépôt sur GitHub.
+2. Dans Webflow → Apps → "Deploy app" → connecter le dépôt GitHub, choisir "to its own domain".
+3. Webflow Cloud détecte Astro automatiquement (`npm run build`, sortie dans `dist/`).
+4. Configurer un environnement de preprod (branche de preview) avant de pointer la prod sur `main`.
+5. Une fois en ligne (HTTPS + domaine dédié), ouvrir l'URL sur le téléphone et faire "Ajouter à l'écran d'accueil" — l'app fonctionne alors depuis n'importe où (salle de sport, 4G...), avec mode hors-ligne actif (le service worker peut s'enregistrer car le site est en HTTPS).
 
 ## Fonctionnement
 
@@ -31,5 +31,5 @@ Le Mac doit être allumé et `./start.sh` doit tourner à chaque fois que tu veu
 
 ## Limites à connaître
 
-- Les données vivent dans le navigateur du téléphone. Ne pas vider le cache/les données de site sous peine de tout perdre. Pas de synchronisation entre plusieurs appareils.
-- Le mode hors-ligne (via service worker) ne s'active que dans un contexte sécurisé (HTTPS ou `localhost`) ; en HTTP local sur le wifi, l'app fonctionne très bien mais nécessite que le Mac + le serveur soient allumés au moment de l'utiliser.
+- Les données vivent dans le navigateur du téléphone (localStorage). Ne pas vider le cache/les données de site sous peine de tout perdre. Pas de synchronisation entre plusieurs appareils.
+- Aucune donnée ne transite par un serveur : Webflow Cloud héberge uniquement les fichiers statiques de l'app, rien côté base de données.
