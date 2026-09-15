@@ -76,7 +76,7 @@ function openModal(titleText, bodyHtml) {
 function renderProgramme() {
   const list = document.getElementById("programme-list");
   if (!state.program.length) {
-    list.innerHTML = `<p class="empty-state">Aucun jour pour l'instant.<br>Ajoute un jour pour commencer ton programme.</p>`;
+    list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📋</div>Aucun jour pour l'instant.<br>Ajoute un jour pour commencer ton programme.</div>`;
     return;
   }
   list.innerHTML = state.program.map((day) => dayCardHtml(day)).join("");
@@ -167,7 +167,7 @@ function openAddExerciseModal(dayId) {
     <input class="input" id="modal-exo-search" placeholder="Rechercher...">
     <div id="modal-exo-options" class="stack" style="max-height:220px; overflow-y:auto;"></div>
     <div id="modal-exo-config" class="hidden stack">
-      <div class="grid-3" style="grid-template-columns: 1fr 1fr;">
+      <div class="grid-2">
         <div class="field"><label>Séries</label><input class="input input-num" id="input-sets" type="number" inputmode="numeric" value="3" min="1"></div>
         <div class="field"><label>Reps</label><input class="input input-num" id="input-reps" type="number" inputmode="numeric" value="10" min="1"></div>
       </div>
@@ -212,7 +212,7 @@ function openEditItemModal(dayId, itemIndex) {
   const day = state.program.find((d) => d.id === dayId);
   const item = day.items[itemIndex];
   openModal("Modifier " + item.name, `
-    <div class="grid-3" style="grid-template-columns: 1fr 1fr;">
+    <div class="grid-2">
       <div class="field"><label>Séries</label><input class="input input-num" id="input-sets" type="number" value="${item.sets}" min="1"></div>
       <div class="field"><label>Reps</label><input class="input input-num" id="input-reps" type="number" value="${item.reps}" min="1"></div>
     </div>
@@ -335,6 +335,7 @@ function sessionExoCardHtml(item, idx) {
       <button class="btn btn-outline btn-sm" data-action="add-set" data-item-index="${idx}">+ série</button>
     </div>
     ${last ? `<div class="last-time">Dernière fois : ${esc(formatSets(last.sets))}</div>` : ""}
+    <div class="set-columns"><span>#</span><span>Poids</span><span>Reps</span><span></span></div>
     <div class="stack" style="gap:8px">
       ${item.sets.map((s, sIdx) => setRowHtml(idx, s, sIdx)).join("")}
     </div>
@@ -405,7 +406,7 @@ function finishSession() {
 function renderHistorique() {
   const container = document.getElementById("historique-list");
   if (!state.history.length) {
-    container.innerHTML = `<p class="empty-state">Aucune séance enregistrée pour l'instant.</p>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🕒</div>Aucune séance enregistrée pour l'instant.</div>`;
     return;
   }
   const sorted = [...state.history].sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -457,7 +458,7 @@ function renderExercices(filter) {
   const f = (filter || "").trim().toLowerCase();
   const filtered = state.exercises.filter((e) => e.name.toLowerCase().includes(f));
   if (!filtered.length) {
-    container.innerHTML = `<p class="empty-state">Aucun exercice trouvé.</p>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📚</div>Aucun exercice trouvé.</div>`;
     return;
   }
   const groups = groupExercises(filtered);
