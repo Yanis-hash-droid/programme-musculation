@@ -405,20 +405,21 @@ function sessionExoCardHtml(item, idx) {
       <button class="btn btn-outline btn-sm" data-action="add-set" data-item-index="${idx}">+ série</button>
     </div>
     ${last ? `<div class="last-time">Dernière fois : ${esc(formatSets(last.sets))}</div>` : ""}
-    <div class="set-columns"><span>#</span><span>Poids</span><span>Reps</span><span></span></div>
+    <div class="set-columns"><span>#</span><span>Poids</span><span>Reps</span><span></span><span></span></div>
     <div class="stack" style="gap:8px">
-      ${item.sets.map((s, sIdx) => setRowHtml(idx, s, sIdx)).join("")}
+      ${item.sets.map((s, sIdx) => setRowHtml(idx, s, sIdx, item.sets.length)).join("")}
     </div>
   </div>`;
 }
 
-function setRowHtml(itemIdx, s, setIdx) {
+function setRowHtml(itemIdx, s, setIdx, count) {
   return `
   <div class="set-row">
     <div class="set-row-label">${setIdx + 1}</div>
     <input class="input input-num" type="number" inputmode="decimal" step="0.5" min="0" value="${s.weight}" data-field="weight" data-item-index="${itemIdx}" data-set-index="${setIdx}" placeholder="kg">
     <input class="input input-num" type="number" inputmode="numeric" min="0" value="${s.reps}" data-field="reps" data-item-index="${itemIdx}" data-set-index="${setIdx}" placeholder="reps">
     <button class="set-done ${s.done ? "checked" : ""}" data-action="toggle-done" data-item-index="${itemIdx}" data-set-index="${setIdx}">✓</button>
+    <button class="set-remove" data-action="delete-set" data-item-index="${itemIdx}" data-set-index="${setIdx}" ${count <= 1 ? "disabled" : ""}>${ICON_CLOSE}</button>
   </div>`;
 }
 
@@ -437,6 +438,16 @@ document.getElementById("seance-active").addEventListener("click", (e) => {
     const idx = +toggleBtn.dataset.itemIndex;
     const sIdx = +toggleBtn.dataset.setIndex;
     currentSession.items[idx].sets[sIdx].done = !currentSession.items[idx].sets[sIdx].done;
+    renderActiveSession();
+    return;
+  }
+  const removeSetBtn = e.target.closest('[data-action="delete-set"]');
+  if (removeSetBtn) {
+    const idx = +removeSetBtn.dataset.itemIndex;
+    const sIdx = +removeSetBtn.dataset.setIndex;
+    const item = currentSession.items[idx];
+    if (item.sets.length <= 1) return;
+    item.sets.splice(sIdx, 1);
     renderActiveSession();
   }
 });
