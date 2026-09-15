@@ -301,7 +301,7 @@ body {
   flex: 1;
   background: none;
   border: none;
-  color: var(--text-faint);
+  color: var(--text-dim);
   padding: 8px 4px 6px;
   display: flex;
   flex-direction: column;
