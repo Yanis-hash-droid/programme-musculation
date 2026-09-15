@@ -7,6 +7,11 @@ function esc(str) {
   return String(str).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
+// ---------- Icons ----------
+const ICON_EDIT = `<svg viewBox="0 0 24 24"><path d="M4 20l1-4.5L15.5 5 19 8.5 8.5 19 4 20Z"></path><path d="M13 7l4 4"></path></svg>`;
+const ICON_TRASH = `<svg viewBox="0 0 24 24"><path d="M5 7h14"></path><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path><path d="M7 7l1 12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2l1-12"></path><path d="M10 11v6M14 11v6"></path></svg>`;
+const ICON_CLOSE = `<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"></path></svg>`;
+
 // ---------- Storage ----------
 const STORAGE_KEYS = { exercises: "muscu_exercises", program: "muscu_program", history: "muscu_history" };
 
@@ -88,8 +93,8 @@ function dayCardHtml(day) {
     <div class="card-header">
       <h3 class="card-title">${esc(day.name)}</h3>
       <div class="row">
-        <button class="btn btn-icon" data-action="rename-day" data-day-id="${day.id}">✏️</button>
-        <button class="btn btn-icon" data-action="delete-day" data-day-id="${day.id}">🗑️</button>
+        <button class="btn btn-icon" data-action="rename-day" data-day-id="${day.id}">${ICON_EDIT}</button>
+        <button class="btn btn-icon btn-icon-danger" data-action="delete-day" data-day-id="${day.id}">${ICON_TRASH}</button>
       </div>
     </div>
     ${day.items.length ? day.items.map((item, idx) => exoRowHtml(day.id, item, idx)).join("") : `<p class="hint">Aucun exercice. Ajoute-en un ci-dessous.</p>`}
@@ -105,8 +110,8 @@ function exoRowHtml(dayId, item, idx) {
       <div class="exo-row-target">${item.sets} séries × ${item.reps} reps</div>
     </div>
     <div class="row">
-      <button class="btn btn-icon" data-action="edit-item" data-day-id="${dayId}" data-item-index="${idx}">✏️</button>
-      <button class="btn btn-icon" data-action="delete-item" data-day-id="${dayId}" data-item-index="${idx}">✕</button>
+      <button class="btn btn-icon" data-action="edit-item" data-day-id="${dayId}" data-item-index="${idx}">${ICON_EDIT}</button>
+      <button class="btn btn-icon btn-icon-danger" data-action="delete-item" data-day-id="${dayId}" data-item-index="${idx}">${ICON_CLOSE}</button>
     </div>
   </div>`;
 }
@@ -422,7 +427,7 @@ function historyCardHtml(session) {
         <h3 class="card-title">${esc(session.dayName)}</h3>
         <div class="card-sub">${dateStr}</div>
       </div>
-      <button class="btn btn-icon" data-action="delete-session" data-session-id="${session.id}">🗑️</button>
+      <button class="btn btn-icon btn-icon-danger" data-action="delete-session" data-session-id="${session.id}">${ICON_TRASH}</button>
     </div>
     ${session.items.map((item) => `
       <div class="exo-row">
@@ -470,7 +475,7 @@ function renderExercices(filter) {
         ${groups[g].map((e) => `
           <div class="exo-item">
             <span>${esc(e.name)}</span>
-            <button class="btn btn-icon" data-action="delete-exo" data-exo-id="${e.id}">🗑️</button>
+            <button class="btn btn-icon btn-icon-danger" data-action="delete-exo" data-exo-id="${e.id}">${ICON_TRASH}</button>
           </div>
         `).join("")}
       </div>
