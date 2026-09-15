@@ -8,10 +8,10 @@
   --text: #f2f4fa;
   --text-dim: #8993ab;
   --text-faint: #5c6680;
-  --accent: #fb7a2f;
-  --accent-hover: #ff8c42;
-  --accent-text: #201004;
-  --accent-glow: rgba(251, 122, 47, 0.28);
+  --accent: #4c7cf0;
+  --accent-hover: #6b93f5;
+  --accent-text: #f8faff;
+  --accent-glow: rgba(76, 124, 240, 0.28);
   --danger: #f5455c;
   --danger-glow: rgba(245, 69, 92, 0.18);
   --success: #22c55e;
@@ -43,7 +43,7 @@ body {
   display: flex;
   flex-direction: column;
   background:
-    radial-gradient(1200px 500px at 50% -10%, rgba(251, 122, 47, 0.10), transparent 60%),
+    radial-gradient(1200px 500px at 50% -10%, rgba(76, 124, 240, 0.12), transparent 60%),
     var(--bg);
 }
 
