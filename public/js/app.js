@@ -102,7 +102,7 @@ function exoRowHtml(dayId, item, idx) {
   <div class="exo-row">
     <div>
       <div class="exo-row-name">${esc(item.name)}</div>
-      <div class="exo-row-target">${item.sets} séries × ${item.reps} reps${item.weight ? " · " + item.weight + " kg" : ""}</div>
+      <div class="exo-row-target">${item.sets} séries × ${item.reps} reps</div>
     </div>
     <div class="row">
       <button class="btn btn-icon" data-action="edit-item" data-day-id="${dayId}" data-item-index="${idx}">✏️</button>
@@ -167,11 +167,11 @@ function openAddExerciseModal(dayId) {
     <input class="input" id="modal-exo-search" placeholder="Rechercher...">
     <div id="modal-exo-options" class="stack" style="max-height:220px; overflow-y:auto;"></div>
     <div id="modal-exo-config" class="hidden stack">
-      <div class="grid-3">
+      <div class="grid-3" style="grid-template-columns: 1fr 1fr;">
         <div class="field"><label>Séries</label><input class="input input-num" id="input-sets" type="number" inputmode="numeric" value="3" min="1"></div>
         <div class="field"><label>Reps</label><input class="input input-num" id="input-reps" type="number" inputmode="numeric" value="10" min="1"></div>
-        <div class="field"><label>Poids (kg)</label><input class="input input-num" id="input-weight" type="number" inputmode="decimal" min="0" step="0.5" value="0"></div>
       </div>
+      <p class="hint">Le poids se règle directement pendant la séance, série par série.</p>
       <button class="btn btn-primary btn-block" id="btn-confirm-add-exo">Ajouter au jour</button>
     </div>
   `);
@@ -200,9 +200,8 @@ function openAddExerciseModal(dayId) {
     const exo = state.exercises.find((e) => e.id === selectedExoId);
     const sets = parseInt(document.getElementById("input-sets").value) || 1;
     const reps = parseInt(document.getElementById("input-reps").value) || 1;
-    const weight = parseFloat(document.getElementById("input-weight").value) || 0;
     const day = state.program.find((d) => d.id === dayId);
-    day.items.push({ exerciseId: exo.id, name: exo.name, sets, reps, weight });
+    day.items.push({ exerciseId: exo.id, name: exo.name, sets, reps });
     persistProgram();
     closeModal();
     renderProgramme();
@@ -213,17 +212,15 @@ function openEditItemModal(dayId, itemIndex) {
   const day = state.program.find((d) => d.id === dayId);
   const item = day.items[itemIndex];
   openModal("Modifier " + item.name, `
-    <div class="grid-3">
+    <div class="grid-3" style="grid-template-columns: 1fr 1fr;">
       <div class="field"><label>Séries</label><input class="input input-num" id="input-sets" type="number" value="${item.sets}" min="1"></div>
       <div class="field"><label>Reps</label><input class="input input-num" id="input-reps" type="number" value="${item.reps}" min="1"></div>
-      <div class="field"><label>Poids (kg)</label><input class="input input-num" id="input-weight" type="number" value="${item.weight || 0}" min="0" step="0.5"></div>
     </div>
     <button class="btn btn-primary btn-block" id="btn-save-item">Enregistrer</button>
   `);
   document.getElementById("btn-save-item").addEventListener("click", () => {
     item.sets = parseInt(document.getElementById("input-sets").value) || 1;
     item.reps = parseInt(document.getElementById("input-reps").value) || 1;
-    item.weight = parseFloat(document.getElementById("input-weight").value) || 0;
     persistProgram();
     closeModal();
     renderProgramme();
@@ -279,13 +276,18 @@ function startSession(dayId) {
     dayId: day.id,
     dayName: day.name,
     date: new Date().toISOString(),
-    items: day.items.map((item) => ({
-      exerciseId: item.exerciseId,
-      name: item.name,
-      targetReps: item.reps,
-      targetWeight: item.weight,
-      sets: Array.from({ length: item.sets }, () => ({ reps: item.reps, weight: item.weight, done: false })),
-    })),
+    items: day.items.map((item) => {
+      const last = findLastPerformance(item.exerciseId);
+      const weightFor = (i) => {
+        if (!last || !last.sets.length) return 0;
+        return (last.sets[i] || last.sets[last.sets.length - 1]).weight;
+      };
+      return {
+        exerciseId: item.exerciseId,
+        name: item.name,
+        sets: Array.from({ length: item.sets }, (_, i) => ({ reps: item.reps, weight: weightFor(i), done: false })),
+      };
+    }),
   };
   renderSeance();
 }
@@ -355,7 +357,7 @@ document.getElementById("seance-active").addEventListener("click", (e) => {
     const idx = +addSetBtn.dataset.itemIndex;
     const item = currentSession.items[idx];
     const lastSet = item.sets[item.sets.length - 1];
-    item.sets.push({ reps: lastSet ? lastSet.reps : item.targetReps, weight: lastSet ? lastSet.weight : item.targetWeight, done: false });
+    item.sets.push({ reps: lastSet.reps, weight: lastSet.weight, done: false });
     renderActiveSession();
     return;
   }
