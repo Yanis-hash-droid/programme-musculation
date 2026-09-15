@@ -11,6 +11,33 @@ function esc(str) {
 const ICON_EDIT = `<svg viewBox="0 0 24 24"><path d="M4 20l1-4.5L15.5 5 19 8.5 8.5 19 4 20Z"></path><path d="M13 7l4 4"></path></svg>`;
 const ICON_TRASH = `<svg viewBox="0 0 24 24"><path d="M5 7h14"></path><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path><path d="M7 7l1 12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2l1-12"></path><path d="M10 11v6M14 11v6"></path></svg>`;
 const ICON_CLOSE = `<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"></path></svg>`;
+const ICON_CHEVRON_UP = `<svg viewBox="0 0 24 24"><path d="M6 14l6-6 6 6"></path></svg>`;
+const ICON_CHEVRON_DOWN = `<svg viewBox="0 0 24 24"><path d="M6 10l6 6 6-6"></path></svg>`;
+const ICON_COPY = `<svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>`;
+
+// ---------- Toast / undo ----------
+const toastRoot = document.getElementById("toast-root");
+let pendingUndo = null;
+
+function showUndoToast(message, undoFn) {
+  if (pendingUndo) clearTimeout(pendingUndo.timeoutId);
+  toastRoot.innerHTML = `
+    <div class="toast">
+      <span>${esc(message)}</span>
+      <button class="toast-undo" id="toast-undo-btn">Annuler</button>
+    </div>`;
+  document.getElementById("toast-undo-btn").addEventListener("click", () => {
+    clearTimeout(pendingUndo.timeoutId);
+    pendingUndo = null;
+    toastRoot.innerHTML = "";
+    undoFn();
+  });
+  const timeoutId = setTimeout(() => {
+    pendingUndo = null;
+    toastRoot.innerHTML = "";
+  }, 5000);
+  pendingUndo = { timeoutId };
+}
 
 // ---------- Storage ----------
 const STORAGE_KEYS = { exercises: "muscu_exercises", program: "muscu_program", history: "muscu_history" };
@@ -93,16 +120,17 @@ function dayCardHtml(day) {
     <div class="card-header">
       <h3 class="card-title">${esc(day.name)}</h3>
       <div class="row">
+        <button class="btn btn-icon" data-action="duplicate-day" data-day-id="${day.id}">${ICON_COPY}</button>
         <button class="btn btn-icon" data-action="rename-day" data-day-id="${day.id}">${ICON_EDIT}</button>
         <button class="btn btn-icon btn-icon-danger" data-action="delete-day" data-day-id="${day.id}">${ICON_TRASH}</button>
       </div>
     </div>
-    ${day.items.length ? day.items.map((item, idx) => exoRowHtml(day.id, item, idx)).join("") : `<p class="hint">Aucun exercice. Ajoute-en un ci-dessous.</p>`}
+    ${day.items.length ? day.items.map((item, idx) => exoRowHtml(day.id, item, idx, day.items.length)).join("") : `<p class="hint">Aucun exercice. Ajoute-en un ci-dessous.</p>`}
     <button class="btn btn-outline btn-block" data-action="add-exo-to-day" data-day-id="${day.id}">+ Ajouter un exercice</button>
   </div>`;
 }
 
-function exoRowHtml(dayId, item, idx) {
+function exoRowHtml(dayId, item, idx, count) {
   return `
   <div class="exo-row">
     <div>
@@ -110,6 +138,10 @@ function exoRowHtml(dayId, item, idx) {
       <div class="exo-row-target">${item.sets} séries × ${item.reps} reps</div>
     </div>
     <div class="row">
+      <div class="reorder-stepper">
+        <button class="reorder-btn" data-action="move-item-up" data-day-id="${dayId}" data-item-index="${idx}" ${idx === 0 ? "disabled" : ""}>${ICON_CHEVRON_UP}</button>
+        <button class="reorder-btn" data-action="move-item-down" data-day-id="${dayId}" data-item-index="${idx}" ${idx === count - 1 ? "disabled" : ""}>${ICON_CHEVRON_DOWN}</button>
+      </div>
       <button class="btn btn-icon" data-action="edit-item" data-day-id="${dayId}" data-item-index="${idx}">${ICON_EDIT}</button>
       <button class="btn btn-icon btn-icon-danger" data-action="delete-item" data-day-id="${dayId}" data-item-index="${idx}">${ICON_CLOSE}</button>
     </div>
@@ -123,9 +155,12 @@ document.getElementById("programme-list").addEventListener("click", (e) => {
   const dayId = btn.dataset.dayId;
   if (action === "rename-day") openRenameDayModal(dayId);
   if (action === "delete-day") deleteDay(dayId);
+  if (action === "duplicate-day") duplicateDay(dayId);
   if (action === "add-exo-to-day") openAddExerciseModal(dayId);
   if (action === "edit-item") openEditItemModal(dayId, +btn.dataset.itemIndex);
   if (action === "delete-item") deleteItem(dayId, +btn.dataset.itemIndex);
+  if (action === "move-item-up") moveItem(dayId, +btn.dataset.itemIndex, -1);
+  if (action === "move-item-down") moveItem(dayId, +btn.dataset.itemIndex, 1);
 });
 
 document.getElementById("btn-add-day").addEventListener("click", () => {
@@ -161,8 +196,33 @@ function openRenameDayModal(dayId) {
 }
 
 function deleteDay(dayId) {
-  if (!confirm("Supprimer ce jour du programme ?")) return;
-  state.program = state.program.filter((d) => d.id !== dayId);
+  const idx = state.program.findIndex((d) => d.id === dayId);
+  if (idx === -1) return;
+  const [removed] = state.program.splice(idx, 1);
+  persistProgram();
+  renderProgramme();
+  showUndoToast(`"${removed.name}" supprimé`, () => {
+    state.program.splice(idx, 0, removed);
+    persistProgram();
+    renderProgramme();
+  });
+}
+
+function duplicateDay(dayId) {
+  const idx = state.program.findIndex((d) => d.id === dayId);
+  if (idx === -1) return;
+  const day = state.program[idx];
+  const copy = { id: uid(), name: day.name + " (copie)", items: day.items.map((it) => ({ ...it })) };
+  state.program.splice(idx + 1, 0, copy);
+  persistProgram();
+  renderProgramme();
+}
+
+function moveItem(dayId, itemIndex, direction) {
+  const day = state.program.find((d) => d.id === dayId);
+  const newIndex = itemIndex + direction;
+  if (!day || newIndex < 0 || newIndex >= day.items.length) return;
+  [day.items[itemIndex], day.items[newIndex]] = [day.items[newIndex], day.items[itemIndex]];
   persistProgram();
   renderProgramme();
 }
@@ -234,9 +294,14 @@ function openEditItemModal(dayId, itemIndex) {
 
 function deleteItem(dayId, itemIndex) {
   const day = state.program.find((d) => d.id === dayId);
-  day.items.splice(itemIndex, 1);
+  const [removed] = day.items.splice(itemIndex, 1);
   persistProgram();
   renderProgramme();
+  showUndoToast(`"${removed.name}" retiré du jour`, () => {
+    day.items.splice(itemIndex, 0, removed);
+    persistProgram();
+    renderProgramme();
+  });
 }
 
 // =====================================================
@@ -443,10 +508,16 @@ function historyCardHtml(session) {
 document.getElementById("historique-list").addEventListener("click", (e) => {
   const btn = e.target.closest('[data-action="delete-session"]');
   if (!btn) return;
-  if (!confirm("Supprimer cette séance ?")) return;
-  state.history = state.history.filter((s) => s.id !== btn.dataset.sessionId);
+  const idx = state.history.findIndex((s) => s.id === btn.dataset.sessionId);
+  if (idx === -1) return;
+  const [removed] = state.history.splice(idx, 1);
   persistHistory();
   renderHistorique();
+  showUndoToast("Séance supprimée", () => {
+    state.history.splice(idx, 0, removed);
+    persistHistory();
+    renderHistorique();
+  });
 });
 
 // =====================================================
@@ -488,10 +559,16 @@ document.getElementById("exo-search").addEventListener("input", (e) => renderExe
 document.getElementById("exo-list").addEventListener("click", (e) => {
   const btn = e.target.closest('[data-action="delete-exo"]');
   if (!btn) return;
-  if (!confirm("Supprimer cet exercice de la bibliothèque ?")) return;
-  state.exercises = state.exercises.filter((ex) => ex.id !== btn.dataset.exoId);
+  const idx = state.exercises.findIndex((ex) => ex.id === btn.dataset.exoId);
+  if (idx === -1) return;
+  const [removed] = state.exercises.splice(idx, 1);
   persistExercises();
   renderExercices(document.getElementById("exo-search").value);
+  showUndoToast(`"${removed.name}" supprimé`, () => {
+    state.exercises.splice(idx, 0, removed);
+    persistExercises();
+    renderExercices(document.getElementById("exo-search").value);
+  });
 });
 
 document.getElementById("btn-add-exo").addEventListener("click", () => {
